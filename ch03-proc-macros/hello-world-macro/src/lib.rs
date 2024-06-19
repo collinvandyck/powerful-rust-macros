@@ -1,3 +1,5 @@
+use core::panic;
+
 use proc_macro::{TokenStream, TokenTree};
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
@@ -37,4 +39,23 @@ pub fn hello_simple(item: TokenStream) -> TokenStream {
     )
     .parse()
     .unwrap()
+}
+use venial::parse_item;
+
+#[proc_macro_derive(HelloVenial)]
+pub fn hello_venial(item: TokenStream) -> TokenStream {
+    let decl = parse_item(item.into()).unwrap();
+    let name: syn::Ident = match decl {
+        venial::Item::Struct(venial::Struct { name, .. }) => name,
+        venial::Item::Enum(venial::Enum { name, .. }) => name,
+        _ => panic!("only structs and enums"),
+    };
+    let res = quote! {
+        impl #name {
+            fn hello_world(&self) {
+                println!("Hello, World (venial)");
+            }
+        }
+    };
+    res.into()
 }
